@@ -1,0 +1,1 @@
+int commandInterpreter(char* command);
