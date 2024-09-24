@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h> 
 #include <string.h>
+#include "./common.h"
 
-#define DATA_PATH "./database"
 #define INITIAL_COUNTER 0 //initial table counter
 #define MAX_COL 16 //max number of table's columns
 #define MAX_CHAR 128 //max number of table's entry
@@ -12,10 +12,10 @@
 /**
  * @brief   Creates first & initial table's chunk file.
  * 
- * @param   name_0 First table chunk name. 
+ * @param   chunk0_path First table chunk path. 
  */
-int createInitialChunk(char* name_0) {
-    FILE *f = fopen(name_0, "w");
+int createInitialChunk(char* chunk0_path) {
+    FILE *f = fopen(chunk0_path, "w");
     if(f == NULL) return -1;
     fclose(f);
     return 1;
@@ -25,11 +25,11 @@ int createInitialChunk(char* name_0) {
  * @brief   Creates initial table's state file.
  * 
  * @param   name Table name. 
- * @param   name_s Table state file name. 
+ * @param   state_path Table state file path. 
  * @param   col Table's columns name. 
  */
-int createInitialState(char* name, char* name_s, char* col[]) {
-    FILE *f_s = fopen(name_s, "w");
+int createInitialState(char* name, char* state_path, char* col[]) {
+    FILE *f_s = fopen(state_path, "w");
     if(f_s == NULL) return -1;
     fprintf(f_s, "%s %i %i\n", name, INITIAL_COUNTER, MAX_ROWS_PER_CHUNK);
     for(int i = 0; i < MAX_COL; i++) {
@@ -49,16 +49,12 @@ int createInitialState(char* name, char* name_s, char* col[]) {
 int createTable(char* name, char* col[]) {
     FILE *f, *f_s;
 
-    char* name_0 = malloc(sizeof(char) * strlen(name));
-    char* name_s = malloc(sizeof(char) * strlen(name));
-    strcpy(name_0, name);
-    strcpy(name_s, name);
-    strcat(name_0, "_0");
-    strcat(name_s, "_s");
+    char* chunk0_path = buildChunkPath(name, 0);
+    char* state_path = buildStatePath(name);
 
     //check if name is unique
-    f = fopen(name_0, "r");
-    f_s = fopen(name_s, "r");
+    f = fopen(chunk0_path, "r");
+    f_s = fopen(state_path, "r");
     if(f != NULL || f_s != NULL) {
         printf("<- Error! Table with given name already exists.\n");
         if(f != NULL) fclose(f);
@@ -79,11 +75,11 @@ int createTable(char* name, char* col[]) {
         }
     }
 
-    if(createInitialChunk(name_0) == -1) return -1;
-    if(createInitialState(name, name_s, col) == -1) return -1;
+    if(createInitialChunk(chunk0_path) == -1) return -1;
+    if(createInitialState(name, state_path, col) == -1) return -1;
 
     printf("<- Table has been created.\n");
-    free(name_0);
-    free(name_s);
+    free(chunk0_path);
+    free(state_path);
     return 1;
 } 

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <limits.h>
 #include "./create.h"
+#include "./common.h"
 
 #define MAX_TABLE_CHUNK_LOADED 124 //max number of chunks loaded to memory
 
@@ -79,13 +80,13 @@ int mentionChunk(char* chunk_name) {
  */
 void populateChunkStateFromFile(FILE* f_s, struct TableChunk* chunk) {
     int i = 0, j = 0;
-    char buf_s[1024]; //TODO: size???
-    while (fgets(buf_s, sizeof(buf_s), f_s) != NULL) {
-        char* token = strtok(buf_s, " ");
-        char* src = malloc(sizeof(char) * strlen(token));
+    char buffer[1024];
+    while (fgets(buffer, sizeof(buffer), f_s) != NULL) {
+        char* token = strtok(buffer, " ");
         while(token != NULL) {
             if(i == 0) {
                 if(j == 0) { //TODO: easier ???
+                    char* src = malloc(sizeof(char) * strlen(token));
                     strcpy(src, token);
                     chunk->src = src;
                 }
@@ -108,9 +109,9 @@ void populateChunkStateFromFile(FILE* f_s, struct TableChunk* chunk) {
  */
 void populateChunkDataFromFile(FILE* f, struct TableChunk* chunk) {
     int i = 0, j = 0;
-    char buf[MAX_CHAR * MAX_COL + MAX_COL];
-    while (fgets(buf, sizeof(buf), f) != NULL) {
-        char* token = strtok(buf, " ");
+    char buffer[MAX_CHAR * MAX_COL + MAX_COL];
+    while (fgets(buffer, sizeof(buffer), f) != NULL) {
+        char* token = strtok(buffer, " ");
         j = 0;
         while(token != NULL) {
             chunk->data[i][j] = token;
@@ -125,22 +126,32 @@ void populateChunkDataFromFile(FILE* f, struct TableChunk* chunk) {
  * @brief   Loads table chunk from file to memory.
  *          Chunk is also pushed into `table_chunks_stack`. 
  * 
- * @param   chunkName  Name of the table's chunk file.
- * @param   stateName  Name of the table's state file.
+ * @param   chunk_name  Name of the table's chunk file.
+ * @param   state_name  Name of the table's state file.
  *                 
  * @return Returns 1 if success, returns 0 if error ocurred.
  */
-int loadTableChunk(char* chunkName, char* stateName) {
+int loadTableChunk(char* name, char* chunk_index) {
     int i, j;
     FILE *f, *f_s;
-    f = fopen(chunkName, "r");
+    char* chunk_name = buildChunkName(name, chunk_index);
+    char* chunk_path = buildChunkPath(name, chunk_index);
+    char* state_path = buildStatePath(name);
+
+    f = fopen(chunk_path, "r");
     if(f == NULL) {
         printf("<- Error! Table chunk not found.\n");
+        free(chunk_name);
+        free(chunk_path);
+        free(state_path);
         return 0;
     }
-    f_s = fopen(stateName, "r");
+    f_s = fopen(state_path, "r");
     if(f_s == NULL) {
         printf("<- Error! Table state not found.\n");
+        free(chunk_name);
+        free(chunk_path);
+        free(state_path);
         return 0;
     }
 
@@ -150,7 +161,7 @@ int loadTableChunk(char* chunkName, char* stateName) {
     time_t timestamp = time(NULL);
     chunk.loaded_timestamp = timestamp;
     chunk.lastly_mentioned = timestamp;
-    chunk.name = chunkName;
+    chunk.name = chunk_name;
     chunk.to_replace = 0;
     chunk.to_save = 0;
 
@@ -162,5 +173,7 @@ int loadTableChunk(char* chunkName, char* stateName) {
     printf("<- Table chunk has been loaded to memory.\n");
     fclose(f);
     fclose(f_s);
+    free(chunk_path);
+    free(state_path);
     return 1;
 }

@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "command.h": "c",
+        "typeinfo": "c",
+        "common.h": "c"
+    }
+}

@@ -35,22 +35,18 @@ int commandInterpreter(char* command) {
         
         createTable(token[1], col);
         return 1;
-    //LOAD [table_chunk_name]
+    //LOAD [table_name] [table_chunk_index]
     } else if (strcmp(token[0], LOAD) == 0) {
         if(token[1] == NULL) {
             printf("<- Error! Table chunk not specified.\n");
             return 0;
         }
+        if(token[2] == NULL) {
+            printf("<- Error! Chunk index not specified.\n");
+            return 0;
+        }
 
-        //TODO: neater ???
-        char* s_name = malloc(sizeof(char) * strlen(token[1]));
-        char* c_name = malloc(sizeof(char) * strlen(token[1]));
-        strcpy(c_name, token[1]);
-        char* t_name = strtok(token[1], "_");
-        strcat(s_name, t_name);
-        strcat(s_name, "_s");
-
-        loadTableChunk(c_name, s_name);
+        loadTableChunk(token[1], token[2]);
         return 1;
     //list
     } else if (strcmp(token[0], LIST) == 0) {
